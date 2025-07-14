@@ -71,10 +71,20 @@ jobs:
         with:
           path: lightning
           key: ${{ runner.os }}-build-${{ env.cache-name }}-v${{ env.cln_version }}
-        - name: Link CLN
-          run: |
+      - name: Ensure and Link CLN
+        run: |
+            if [ ! -d lightning ]; then
+            echo "CLN cache miss — cloning and building lightning"
+            git clone https://github.com/ElementsProject/lightning.git
+            cd lightning && git checkout v${{ env.cln_version }}
+            pip install --user poetry && poetry install
+            cargo update -p time
+            ./configure && poetry run make
+            fi
+            echo "Installing CLN to system..."
             source $HOME/.cargo/env
             cd lightning && sudo make install
+
       - name: Install teos and the plugin
         run: |
           cargo install --locked --path teos
